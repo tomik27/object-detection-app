@@ -1,0 +1,153 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Validation API"
+  description: "API for validation operations."
+tags:
+  - name: "Validation"
+
+paths:
+  /start:
+    post:
+      tags:
+        - Validation
+      summary: "Start validation process"
+      description: >
+        Initiates a validation run. The endpoint expects JSON data containing:
+         - source: Path to the source images,
+         - trainingRun: Identifier for the training run,
+         - imgSize: Image size (e.g., 640),
+         - conf: Confidence threshold (e.g., 0.25),
+         - iou: IOU threshold (e.g., 0.5),
+         - model: Model name.
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: data
+          required: true
+          schema:
+            type: object
+            properties:
+              source:
+                type: string
+              trainingRun:
+                type: string
+              imgSize:
+                type: string
+              conf:
+                type: string
+              iou:
+                type: string
+              model:
+                type: string
+          description: "JSON payload with the necessary parameters for validation."
+      responses:
+        '200':
+          description: "Validation run started successfully."
+          schema:
+            type: object
+            properties:
+              experiment:
+                type: string
+        '400':
+          description: "Required parameters are missing."
+        '500':
+          description: "Error occurred while starting the validation process."
+
+  /latest-results:
+    get:
+      tags:
+        - Validation
+      summary: "Retrieve latest validation results"
+      description: "Returns a list of the most recent validated images for the specified experiment and optional model."
+      parameters:
+        - in: query
+          name: experiment
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+        - in: query
+          name: model
+          type: string
+          required: false
+          description: "The name of the model."
+      responses:
+        '200':
+          description: "Latest validation results retrieved successfully."
+        '400':
+          description: "Experiment parameter is missing."
+        '500':
+          description: "Internal server error occurred."
+
+  /get:
+    get:
+      tags:
+        - Validation
+      summary: "Retrieve validation details"
+      description: "Returns detailed validation results for the specified experiment and optional model."
+      parameters:
+        - in: query
+          name: experiment
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+        - in: query
+          name: model
+          type: string
+          required: false
+          description: "The name of the model."
+      responses:
+        '200':
+          description: "Validation details retrieved successfully."
+        '400':
+          description: "Experiment parameter is missing."
+        '500':
+          description: "Internal server error occurred."
+
+  /list:
+    get:
+      tags:
+        - Validation
+      summary: "List validation runs"
+      description: "Provides a list of validation runs for the specified model (default is 'yolov5')."
+      parameters:
+        - in: query
+          name: model
+          type: string
+          required: false
+          default: "yolov5"
+          description: "The name of the model."
+      responses:
+        '200':
+          description: "List of validation runs retrieved successfully."
+        '500':
+          description: "Internal server error occurred."
+
+  /file/{model}/{exp}/{filename}:
+    get:
+      tags:
+        - Validation
+      summary: "Download validation file"
+      description: "Retrieves a specific file from the validation results based on model, experiment, and filename."
+      parameters:
+        - in: path
+          name: model
+          type: string
+          required: true
+          description: "The name of the model."
+        - in: path
+          name: exp
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+        - in: path
+          name: filename
+          type: string
+          required: true
+          description: "The filename of the validation file."
+      responses:
+        '200':
+          description: "Validation file downloaded successfully."
+        '404':
+          description: "File not found."

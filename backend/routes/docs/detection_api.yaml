@@ -1,0 +1,142 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Detection API"
+  description: "API for detection operations."
+tags:
+  - name: "Detection"
+
+paths:
+  /:
+    post:
+      tags:
+        - Detection
+      summary: "Start detection process"
+      description: "Initiates the detection process using form data."
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        - in: formData
+          name: parameter1
+          type: string
+          required: true
+          description: "Description for the first parameter."
+        - in: formData
+          name: parameter2
+          type: string
+          required: false
+          description: "Description for the second parameter."
+      responses:
+        '202':
+          description: "Detection process has been successfully started."
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              experiment:
+                type: string
+              command:
+                type: string
+        '400':
+          description: "Invalid input data or internal error occurred."
+
+  /get:
+    get:
+      tags:
+        - Detection
+      summary: "Retrieve detection results"
+      description: "Returns detection results for the specified experiment and, optionally, the model (default is 'yolov5')."
+      parameters:
+        - in: query
+          name: experiment
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+        - in: query
+          name: model
+          type: string
+          required: false
+          default: "yolov5"
+          description: "The name of the model."
+      responses:
+        '200':
+          description: "Detection results retrieved successfully."
+        '400':
+          description: "Required experiment parameter is missing."
+        '500':
+          description: "Internal server error."
+
+  /list:
+    get:
+      tags:
+        - Detection
+      summary: "List detection runs"
+      description: "Provides a list of detection runs for a specified model."
+      parameters:
+        - in: query
+          name: model
+          type: string
+          required: false
+          default: "yolov5"
+          description: "The model for which runs are listed."
+      responses:
+        '200':
+          description: "List of detection runs retrieved successfully."
+        '400':
+          description: "Missing required parameters."
+        '500':
+          description: "Internal server error."
+
+  /latest:
+    get:
+      tags:
+        - Detection
+      summary: "Retrieve the latest detection images"
+      description: "Returns the latest detection images for the provided experiment and model."
+      parameters:
+        - in: query
+          name: experiment
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+        - in: query
+          name: model
+          type: string
+          required: true
+          description: "The name of the model."
+      responses:
+        '200':
+          description: "Latest detection images retrieved successfully."
+        '400':
+          description: "Missing required parameters."
+        '500':
+          description: "Internal server error."
+
+  /image/{model}/{exp_folder}/{filename}:
+    get:
+      tags:
+        - Detection
+      summary: "Download a detection image"
+      description: "Returns a specific detection image based on the model, experiment folder, and filename."
+      parameters:
+        - in: path
+          name: model
+          type: string
+          required: true
+          description: "The name of the model."
+        - in: path
+          name: exp_folder
+          type: string
+          required: true
+          description: "The folder of the experiment."
+        - in: path
+          name: filename
+          type: string
+          required: true
+          description: "The filename of the image."
+      responses:
+        '200':
+          description: "Image downloaded successfully."
+        '404':
+          description: "Image not found."

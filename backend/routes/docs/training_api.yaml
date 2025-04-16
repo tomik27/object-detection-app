@@ -1,0 +1,155 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Training API"
+  description: "API for training operations."
+tags:
+  - name: "Training"
+
+paths:
+  /:
+    post:
+      tags:
+        - Training
+      summary: "Start training process"
+      description: "Starts the training process for a model using JSON data."
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: data
+          required: true
+          schema:
+            type: object
+            properties:
+              param1:
+                type: string
+              # Add additional parameters according to your training logic
+          description: "JSON payload with the necessary training parameters."
+      responses:
+        '200':
+          description: "Training process started successfully."
+        '500':
+          description: "Internal server error occurred."
+
+  /stop:
+    post:
+      tags:
+        - Training
+      summary: "Stop training process"
+      description: "Stops the currently running training process."
+      responses:
+        '200':
+          description: "Training process stopped successfully."
+        '500':
+          description: "Internal server error occurred."
+
+  /list:
+    get:
+      tags:
+        - Training
+      summary: "List training runs"
+      description: "Retrieves a list of training runs for the specified model."
+      parameters:
+        - in: query
+          name: model
+          type: string
+          required: false
+          default: "yolov5"
+          description: "The name of the model."
+      responses:
+        '200':
+          description: "List of training runs retrieved successfully."
+        '500':
+          description: "Internal server error occurred."
+
+  /logs:
+    get:
+      tags:
+        - Training
+      summary: "Stream training logs"
+      description: "Streams training logs using Server-Sent Events (SSE)."
+      produces:
+        - text/event-stream
+      responses:
+        '200':
+          description: "Log stream initiated successfully."
+
+  /getData:
+    get:
+      tags:
+        - Training
+      summary: "Retrieve training run data"
+      description: "Returns detailed data for the specified training run."
+      parameters:
+        - in: query
+          name: model
+          type: string
+          required: false
+          default: "yolov5"
+          description: "The name of the model."
+        - in: query
+          name: experiment
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+      responses:
+        '200':
+          description: "Training data retrieved successfully."
+        '400':
+          description: "Experiment parameter is missing."
+        '500':
+          description: "Internal server error occurred."
+
+  /get:
+    get:
+      tags:
+        - Training
+      summary: "Retrieve evaluation data"
+      description: "Returns evaluation data for the specified training run."
+      parameters:
+        - in: query
+          name: experiment
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+        - in: query
+          name: model
+          type: string
+          required: false
+          description: "The name of the model."
+      responses:
+        '200':
+          description: "Evaluation data retrieved successfully."
+        '400':
+          description: "Experiment parameter is missing."
+        '500':
+          description: "Internal server error occurred."
+
+  /file/{model}/{exp}/{filename}:
+    get:
+      tags:
+        - Training
+      summary: "Download evaluation file"
+      description: "Retrieves a specific file from evaluation results based on model, experiment, and filename."
+      parameters:
+        - in: path
+          name: model
+          type: string
+          required: true
+          description: "The name of the model."
+        - in: path
+          name: exp
+          type: string
+          required: true
+          description: "The identifier of the experiment."
+        - in: path
+          name: filename
+          type: string
+          required: true
+          description: "The filename of the evaluation file."
+      responses:
+        '200':
+          description: "Evaluation file downloaded successfully."
+        '404':
+          description: "File not found."
