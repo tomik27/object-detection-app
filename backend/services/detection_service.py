@@ -4,7 +4,7 @@ import threading
 import time
 import datetime
 from flask import request  # Needed for extracting host URL in get_latest_images_logic
-
+FOLDER_MODELS = "models"
 def run_detection_logic(form):
     training_run = form.get("trainingRun")
     source = form.get("source")
@@ -16,11 +16,11 @@ def run_detection_logic(form):
     conf = form.get("conf", "0.4")
     iou = form.get("iou", "0.45")
     weight_file = os.path.join("runs", "train", training_run, "weights", "best.pt")
-    if not os.path.exists(os.path.join(model, weight_file)):
+    if not os.path.exists(os.path.join(FOLDER_MODELS, model, weight_file)):
         raise Exception(f"Weight file not found for training run: {training_run}")
 
     # Determine a new experiment number
-    base_detect_dir = os.path.join(os.getcwd(), model, "runs", "detect")
+    base_detect_dir = os.path.join(os.getcwd(),FOLDER_MODELS, model, "runs", "detect")
     if not os.path.exists(base_detect_dir):
         os.makedirs(base_detect_dir, exist_ok=True)
     exp_dirs = [
@@ -47,7 +47,7 @@ def run_detection_logic(form):
     ]
 
     def run_detection():
-        cwd_path = os.path.join(os.getcwd(), model)
+        cwd_path = os.path.join(os.getcwd(),FOLDER_MODELS, model)
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -65,7 +65,7 @@ def run_detection_logic(form):
     return new_experiment, " ".join(cmd)
 
 def get_latest_images_logic(model, experiment, timeout=10, poll_interval=1):
-    base_detect_dir = os.path.join(os.getcwd(), model, "runs", "detect")
+    base_detect_dir = os.path.join(os.getcwd(), FOLDER_MODELS, model, "runs", "detect")
     experiment_folder = os.path.join(base_detect_dir, experiment)
     waited = 0
     while waited < timeout and not os.path.exists(experiment_folder):
@@ -86,7 +86,7 @@ def get_latest_images_logic(model, experiment, timeout=10, poll_interval=1):
 
 
 def get_detection_list(model):
-    base_dir = os.path.join(os.getcwd(), model, "runs", "detect")
+    base_dir = os.path.join(os.getcwd(), FOLDER_MODELS, model, "runs", "detect")
     runs = []
     if os.path.exists(base_dir):
         for run_dir in os.listdir(base_dir):
@@ -104,7 +104,7 @@ def get_detection_list(model):
     return runs
 
 def get_detection(model, experiment, host_url):
-    base_detect_dir = os.path.join(os.getcwd(), model, "runs", "detect")
+    base_detect_dir = os.path.join(os.getcwd(), FOLDER_MODELS, model, "runs", "detect")
     experiment_folder = os.path.join(base_detect_dir, experiment)
 
     if not os.path.exists(experiment_folder):

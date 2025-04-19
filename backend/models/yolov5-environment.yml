@@ -1,4 +1,4 @@
-name: yolo5_env
+name: yolov5_env
 channels:
   - defaults
   - conda-forge

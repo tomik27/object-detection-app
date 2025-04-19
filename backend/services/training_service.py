@@ -7,123 +7,140 @@ import threading
 import datetime
 from queue import Queue
 
-# Pattern to remove ANSI escape sequences
-ANSI_ESCAPE_PATTERN = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+# regex na ANSI escape
+ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+# regex na všechno non‑ASCII
+non_ascii = re.compile(r'[^\x00-\x7F]')
 
-# Global training process handle and log queue for streaming logs
 train_process = None
-log_queue = Queue()
+log_queue    = Queue()
 
 MODEL_ENVIRONMENTS = {
     "yolov5": "yolov5_env",
     "yolov7": "yolov7_env"
 }
+FOLDER_MODELS = "models"
 
-
-def get_python_path_for_env(env_name):
-    """
-    Retrieves the Python interpreter path for a given conda environment.
-
-    Args:
-        env_name (str): Name of the conda environment.
-
-    Returns:
-        str: The absolute path to the Python interpreter in the specified environment.
-
-    Raises:
-        Exception: If the conda environment list fails or the environment cannot be found.
-    """
-    result = subprocess.run(["conda", "env", "list", "--json"],
-                            capture_output=True, text=True)
+def get_python_path_for_env(env_name: str) -> str:
+    result = subprocess.run(
+        ["conda", "env", "list", "--json"],
+        capture_output=True, text=True
+    )
     if result.returncode != 0:
-        raise Exception("Failed to run conda env list: " + result.stderr)
+        raise Exception("Conda env list selhalo: " + result.stderr)
+    envs, _ = json.JSONDecoder().raw_decode(result.stdout)
+    path = next((p for p in envs["envs"] if os.path.basename(p)==env_name), None)
+    if not path:
+        raise Exception(f"Env '{env_name}' nenalezen")
+    python_bin = "python.exe" if os.name=="nt" else "bin/python"
+    full = os.path.join(path, python_bin)
+    if not os.path.isfile(full):
+        raise Exception(f"Python nenalezen v env '{env_name}': {full}")
+    return full
 
-    try:
-        env_list, _ = json.JSONDecoder().raw_decode(result.stdout)
-    except json.JSONDecodeError as e:
-        print("Error parsing JSON:", e)
-        raise
+def create_unique_yaml(data_dir, val_dir, class_list, yaml_folder="yaml") -> str:
+    os.makedirs(yaml_folder, exist_ok=True)
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    yf = os.path.abspath(os.path.join(yaml_folder, f"data_{ts}.yaml"))
+    with open(yf, "w", encoding="utf-8") as f:
+        yaml.dump({
+            "train": data_dir,
+            "val":   val_dir,
+            "nc":    len(class_list),
+            "names": class_list
+        }, f, default_flow_style=False, allow_unicode=True)
+    return yf
 
-    # Find the environment path matching the provided environment name
-    env_path = next((env for env in env_list["envs"]
-                     if os.path.basename(env) == env_name), None)
-    if env_path is None:
-        raise Exception(f"Environment '{env_name}' not found.")
+def clean_line(line: str) -> str:
+    # 1) úplně pryč \r
+    line = line.replace('\r', '')
+    # 2) pryč ANSI sekvence
+    line = ansi_escape.sub('', line)
+    # 3) pryč non‑ASCII (včetně původních �)
+    line = non_ascii.sub('', line)
+    # 4) jen tisknutelné znaky
+    return ''.join(ch for ch in line if ch.isprintable())
 
-    # Build path to python env
-    python_path = os.path.join(env_path, "python.exe" if os.name == "nt" else "bin/python")
-    if not os.path.exists(python_path):
-        raise Exception(f"Python not found in environment '{env_name}': {python_path}")
+def run_training_logic(data: dict) -> dict:
+    global train_process
 
-    return python_path
-
-
-def run_training_logic(data):
+    # 1) vstupy
     image_size = data.get("imageSize", 640)
     batch_size = data.get("batchSize", 16)
-    epochs = data.get("epochs", 50)
-    weights = data.get("weights", "S")
-    data_dir = data.get("dataDir")
-    val_dir = data.get("valDir")
-    class_list = data.get("classList")
-    model = data.get("model", "yolov5")
+    epochs     = data.get("epochs", 50)
+    weights    = data.get("weights", "yolov5s.pt")
+    ddir       = data.get("dataDir")
+    vdir       = data.get("valDir")
+    classes    = data.get("classList")
+    model      = data.get("model", "yolov5").lower()
+    if not (ddir and vdir and classes):
+        raise ValueError("dataDir, valDir i classList jsou povinné")
 
-    results_dir = os.path.join(model, "runs", "train")
-    conda_env = MODEL_ENVIRONMENTS.get(model, "yolov_base_env")
+    # 2) YAML
+    yaml_file = create_unique_yaml(ddir, vdir, classes)
+    print("YAML:", yaml_file)
+
+    # 3) validace modelu
+    if model not in ["yolov5","yolov6","yolov7","yolov8"]:
+        raise ValueError(f"Model '{model}' není podporován")
+    train_py = os.path.abspath(os.path.join(FOLDER_MODELS, model, "train.py"))
+    if not os.path.isfile(train_py):
+        raise FileNotFoundError("Nenalezen train.py: " + train_py)
+
+    # 4) conda env
+    env_name = MODEL_ENVIRONMENTS.get(model, "base_env")
     try:
-        python_path = get_python_path_for_env(conda_env)
+        get_python_path_for_env(env_name)
     except Exception as e:
-        print(f"Error obtaining Python path for environment '{conda_env}': {e}")
-        return
+        print("Conda env error:", e)
+        return {"message": "Env nepřístupné"}
 
-    yaml_file = create_unique_yaml(data_dir, val_dir, class_list)
-    model_lower = model.lower()
-    valid_models = ["yolov5", "yolov6", "yolov7", "yolov8"]
-    if model_lower not in valid_models:
-        raise Exception(f"Model version '{model}' is not valid.")
-
-    train_script = os.path.join(model_lower, "train.py").replace("\\", "/")
-    if not os.path.exists(train_script):
-        raise Exception(f"Training script '{train_script}' not found.")
-
+    # 5) sestav cmd
     cmd = [
-        python_path,
-        train_script,
-        "--img", str(image_size),
+        "conda", "run", "--no-capture-output", "-n", env_name,
+        "python", "-u", train_py,
+        "--img",   str(image_size),
         "--batch", str(batch_size),
-        "--epochs", str(epochs),
-        "--weights", weights,
-        "--data", yaml_file,
-        "--project", results_dir
+        "--epochs",str(epochs),
+        "--weights",weights,
+        "--data",  yaml_file
     ]
-
     print("Run command:", " ".join(cmd))
 
-    def run_training():
+    # 6) worker
+    def _worker():
         global train_process
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"]    = "1"
+        env["PYTHONIOENCODING"]    = "utf-8"
+        env["TQDM_DISABLE_UNICODE"]= "1"
+        env["NO_COLOR"]            = "1"
+
         train_process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            bufsize=1,
             text=True,
             encoding="utf-8",
-            errors="replace"
+            errors="replace",
+            cwd=os.path.dirname(train_py),
+            env=env
         )
-        for line in train_process.stdout:
-            cleaned_line = clean_line(line)
-            log_queue.put(cleaned_line)  # Uložíme vyčištěný log do fronty
-            print(cleaned_line, end="", flush=True)
+        for raw in train_process.stdout:
+            line = clean_line(raw)
+            log_queue.put(line)
+            print(line, end="", flush=True)
+
         train_process.stdout.close()
         train_process.wait()
         log_queue.put("Training completed.\n")
+        train_process = None
 
-    threading.Thread(target=run_training).start()
-    return {"message": "Training initiated"}
+    threading.Thread(target=_worker, daemon=True).start()
+    return {"message": "Trénink zahájen"}
 
-def clean_line(line):
-    line = line.replace('\r', '\n')
-    line = ANSI_ESCAPE_PATTERN.sub('', line)
-    return line
+
 
 def stop_training_logic():
     global train_process
@@ -149,7 +166,7 @@ def get_training_runs_logic(model):
               - timestamp: Creation time in ISO format.
               - path: Full filesystem path to the run directory.
     """
-    base_dir = os.path.join(os.getcwd(), model, "runs", "train")
+    base_dir = os.path.join(os.getcwd(), FOLDER_MODELS, model, "runs", "train")
     runs = []
     if os.path.exists(base_dir):
         for run_dir in os.listdir(base_dir):
