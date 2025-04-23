@@ -24,10 +24,10 @@ export default function AnnotationDialog({
                                          }) {
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Upravit úhel / Třídu</DialogTitle>
+            <DialogTitle>Edit Angle / Class</DialogTitle>
             <DialogContent>
                 <TextField
-                    label="Úhel (°)"
+                    label="Angle (°)"
                     type="number"
                     fullWidth
                     value={angle}
@@ -35,7 +35,7 @@ export default function AnnotationDialog({
                     sx={{mt: 2}}
                 />
                 <FormControl fullWidth sx={{mt: 2}}>
-                    <InputLabel id="class-select-label">Třída</InputLabel>
+                    <InputLabel id="class-select-label">Class</InputLabel>
                     <Select
                         labelId="class-select-label"
                         value={selectedClass}
@@ -54,13 +54,13 @@ export default function AnnotationDialog({
                     onClick={() => onChangeAngle((prevAngle) => (180 - parseFloat(prevAngle)) % 180)}
                     variant="text"
                 >
-                    Přepnout úhel
+                    Switch Angle
                 </Button>
                 <Button onClick={onSave} variant="contained">
-                    Uložit
+                    Save
                 </Button>
                 <Button onClick={onClose} variant="outlined">
-                    Zrušit
+                    Cancel
                 </Button>
             </DialogActions>
         </Dialog>

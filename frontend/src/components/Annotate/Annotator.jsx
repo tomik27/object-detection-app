@@ -5,6 +5,7 @@ import yaml from "js-yaml";
 import {computeAxisAlignedRect, computeRectFrom3PointsAnyOrder, denormalize, normalize,} from "./utils";
 import CanvasArea from "./CanvasArea";
 import ActionBar from "./ActionBar";
+import AnnotationDialog from "./AnnotationDialog.jsx";
 
 export default function Annotator() {
     const [datasetFiles, setDatasetFiles] = useState([]);
@@ -24,7 +25,31 @@ export default function Annotator() {
     const [classList, setClassList] = useState(["Class 1", "Class 2"]);
 
     const [useAngle, setUseAngle] = useState(true);
+    const handleSaveAnnotation = () => {
+        if (!pendingAnnotation) {
+            setIsDialogOpen(false);
+            return;
+        }
+        const cIdx = classList.indexOf(selectedClass);
+        const finalAngle = parseFloat(angle) || pendingAnnotation.angle;
+        const newAnn = {
+            ...pendingAnnotation,
+            angle: finalAngle,
+            classIndex: cIdx >= 0 ? cIdx : 0,
+        };
+        setAnnotations((prev) => [...prev, newAnn]);
+        setPendingAnnotation(null);
+        setIsDialogOpen(false);
+        setAngle("0");
+        setSelectedClass("");
+    };
 
+    const handleCancelAnnotation = () => {
+        setPendingAnnotation(null);
+        setIsDialogOpen(false);
+        setAngle("0");
+        setSelectedClass("");
+    };
     const handleSelectDatasetFolder = (event) => {
         const folderFiles = event.target.files;
         const imageFiles = Array.from(folderFiles).filter((file) =>
@@ -219,6 +244,16 @@ export default function Annotator() {
                     onCanvasClick={handleCanvasClick}
                 />
             </Paper>
+            <AnnotationDialog
+                open={isDialogOpen}
+                angle={angle}
+                onChangeAngle={setAngle}
+                selectedClass={selectedClass}
+                onChangeClass={setSelectedClass}
+                classList={classList}
+                onClose={handleCancelAnnotation}
+                onSave={handleSaveAnnotation}
+            />
         </Box>
     );
 }

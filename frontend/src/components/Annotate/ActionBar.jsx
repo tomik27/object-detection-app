@@ -42,16 +42,6 @@ class ActionBar extends Component {
                             <Button variant="contained" onClick={onChangeDefaultDir}>
                                 Set Storage folder
                             </Button>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={useAngle}
-                                        onChange={onToggleAngle}
-                                        color="primary"
-                                    />
-                                }
-                                label="Use Angle"
-                            />
                             <Button variant="contained" component="label" color="primary">
                                 Load Classes YAML
                                 <input
@@ -62,6 +52,16 @@ class ActionBar extends Component {
                                 />
                             </Button>
                             <ClassManagerModal classes={classList} setClasses={setClassList}/>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={useAngle}
+                                        onChange={onToggleAngle}
+                                        color="primary"
+                                    />
+                                }
+                                label="Use Angle"
+                            />
                         </Stack>
                     </Stack>
                 </Paper>
