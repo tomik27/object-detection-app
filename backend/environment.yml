@@ -1,0 +1,15 @@
+name: backend_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - flask
+  - pyyaml
+  - pip
+  - flasgger
+  - oci-cli
+  - psutil
+  - pip:
+      - opencv-python
+      - flask-cors

@@ -1,9 +1,25 @@
 name: yolov7_env
 channels:
-  - defaults
+  - pytorch          # ↖︎ zde jsou oficiální buildy PyTorchu
   - conda-forge
+  - defaults
+
 dependencies:
+  # ───── Základ ───────────────────────────────
   - python=3.10
+  - cpuonly                     # metabalíček – trvale zablokuje CUDA variantu
+
+  # ───── PyTorch stack (CPU build) ────────────
+  - pytorch::pytorch=2.5.1=*cpu*
+  - pytorch::torchvision=0.20.1=*cpu*
+  - pytorch::torchaudio=2.5.1=*cpu*
+
+  # ───── PIP balíčky ──────────────────────────
   - pip
   - pip:
+      # měkký horní limit, aby pip verze NEzvedl na 2.6
+      - "torch<2.6"
+      - "torchvision<0.21"
+      - "torchaudio<2.6"
+      # ostatní závislosti z repozitáře
       - -r requirements.txt
