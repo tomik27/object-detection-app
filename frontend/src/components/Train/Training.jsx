@@ -14,7 +14,6 @@ export default function Training() {
     const [isProcessing, setIsProcessing] = useState(false);
     const weightsOptions = {
         yolov5: ["yolov5s.pt", "yolov5m.pt", "yolov5l.pt"],
-        yolov6: ["yolov6s.pt", "yolov6m.pt", "yolov6l.pt"],
         yolov7: ["yolov7.pt", "yolov7-tiny.pt", "yolov7-e6.pt", "yolov7-d6.pt", "yolov7x.pt"],
     };
     const [selectedModel, setSelectedModel] = useState("yolov5");
