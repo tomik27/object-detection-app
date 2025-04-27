@@ -1,0 +1,19 @@
+name: yolov7_mm
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+  - cpuonly
+  - pytorch::pytorch=2.5.1=*cpu*
+  - pytorch::torchvision=0.20.1=*cpu*
+  - pytorch::torchaudio=2.5.1=*cpu*
+
+  - pip
+  - pip:
+      - "torch<2.6"
+      - "torchvision<0.21"
+      - "torchaudio<2.6"
+      - -r requirements.txt
