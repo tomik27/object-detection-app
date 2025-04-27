@@ -3,7 +3,9 @@ import subprocess
 import threading
 import time
 import datetime
-from flask import request  # Needed for extracting host URL in get_latest_images_logic
+from flask import request
+from services.env_utils import get_python_interpreter
+
 FOLDER_MODELS = "models"
 def run_detection_logic(form):
     training_run = form.get("trainingRun")
@@ -33,9 +35,10 @@ def run_detection_logic(form):
         max_num = 0
     new_experiment = f"exp{max_num + 1}"
 
+    python_path = get_python_interpreter(model, form.get("python"))
     # Construct the detection command
     cmd = [
-        "python", "detect.py",
+        python_path, "detect.py",
         "--weights", weight_file,
         "--img", str(img_size),
         "--source", source,

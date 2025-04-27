@@ -6,9 +6,10 @@ from datetime import datetime
 
 import yaml
 
-YOLO_DIR = os.path.join(os.getcwd(), "yolov5")
-YAML_DIR = os.path.join(os.getcwd(), "yaml")
-RUNS_DIR = os.path.join(os.getcwd(), "runs", "val")
+from services.env_utils import get_python_interpreter
+
+YOLO_DIR = os.path.join(os.getcwd(), "models", "yolov5")
+RUNS_DIR = os.path.join(os.getcwd(),"models", "runs", "val")
 VAL_SCRIPTS = {
         "yolov5": "val.py",
         "yolov7": "test.py"
@@ -29,7 +30,7 @@ def create_yaml_for_validation(source, train_run, model):
     Returns:
         str: Absolute path to the newly created YAML file.
     """
-    opt_yaml_path = os.path.join(model.lower(), "runs", "train", train_run, "opt.yaml")
+    opt_yaml_path = os.path.join("models", model.lower(), "runs", "train", train_run, "opt.yaml")
     if not os.path.exists(opt_yaml_path):
         raise FileNotFoundError(f"opt.yaml not found: {opt_yaml_path}")
 
@@ -55,39 +56,31 @@ def create_yaml_for_validation(source, train_run, model):
     yaml_filename = f"data_{timestamp}.yaml"
     yaml_file = os.path.abspath(os.path.join(yaml_folder, yaml_filename)).replace("\\", "/")
 
-    # Uložení upraveného YAML souboru
     with open(yaml_file, "w", encoding="utf-8") as f:
         yaml.dump(dataset_yaml, f, default_flow_style=False, allow_unicode=True)
 
     return yaml_file
 
-def start_validation(source, train_run, img_size, conf, iou, model):
-    """
-    Starts the validation script (e.g., val.py or test.py) with the given parameters
-    in a new thread.
+def start_validation(data):
 
-    Args:
-        source (str): Path to the folder with validation images and labels.
-        training_run (str): Name of the training run (e.g., "exp1") where weights and opt.yaml are stored.
-        img_size (int): Image size.
-        conf (float): Confidence threshold.
-        iou (float): IoU threshold.
-        model (str): Name of the model folder (e.g., "yolov5" or "yolov7").
+    source = data.get("source")
+    train_run = data.get("trainingRun")
+    img_size = data.get("imgSize", "640")
+    conf = data.get("conf", "0.25")
+    iou = data.get("iou", "0.5")
+    model = data.get("model")
 
-    Returns:
-        str: A unique experiment identifier for the validation results.
-    """
-    # Create a YAML configuration file for validation with updated data path
     data_yaml = create_yaml_for_validation(source, train_run, model)
 
     model = model.lower()
-    val_script = os.path.join(model,VAL_SCRIPTS[model])
-    train_weights = os.path.join(model, "runs", "train", train_run, "weights", "best.pt")
-    result_dir = os.path.join(os.getcwd(), model, "runs", "val")
+    val_script = os.path.join("models", model, VAL_SCRIPTS[model])
+    train_weights = os.path.join("models", model, "runs", "train", train_run, "weights", "best.pt")
+    result_dir = os.path.join( os.getcwd(),"models", model, "runs", "val")
 
-    # Construct the command for running the validation script
+    python_path = get_python_interpreter(model, data.get("python"))
+
     cmd = [
-        "python", val_script,
+        python_path, val_script,
         "--weights", train_weights,
         "--data", data_yaml,
         "--img", str(img_size),
@@ -108,13 +101,10 @@ def start_validation(source, train_run, img_size, conf, iou, model):
         # Read process output and print logs
         for line in process.stdout:
             cleaned_line = line.strip()
-            # log_queue.put(cleaned_line)
             print(cleaned_line, flush=True)
         process.stdout.close()
         process.wait()
-        # log_queue.put("Validace ukončena.")
 
-    # Spuštění validačního skriptu v novém vlákně
     threading.Thread(target=run_validation).start()
 
     return get_experimental_folder(model)
@@ -125,7 +115,7 @@ def list_validation_runs():
     Prochází adresář RUNS_DIR a vrací seznam experimentů (validací).
     Pokud je v každém experimentu uložen soubor results.json, načte i metriky a datum poslední úpravy.
     """
-    base_dir = RUNS_DIR  # Experimenty jsou přímo ve složce runs/val
+    base_dir = RUNS_DIR
     runs = []
     if not os.path.exists(base_dir):
         return runs
@@ -153,11 +143,7 @@ def list_validation_runs():
 
 
 def get_latest_validation_images(model, experiment):
-    """
-    Vrací seznam posledních validovaných obrázků pro daný experiment.
-    Předpokládá se, že obrázky jsou uloženy v podsložce 'images' v adresáři experimentu.
-    """
-    images_dir = os.path.join(os.getcwd(), model, "runs", "val", experiment)
+    images_dir = os.path.join(os.getcwd(),"models", model.lower(), "runs", "val", experiment)
     if not os.path.exists(images_dir):
         return {"images": []}
 
@@ -169,7 +155,7 @@ def get_latest_validation_images(model, experiment):
 
 
 def get_validation_runs(model):
-    base_dir = os.path.join(os.getcwd(), model, "runs", "val")
+    base_dir = os.path.join(os.getcwd(),"models", model, "runs", "val")
     runs = []
     if os.path.exists(base_dir):
         for run_dir in os.listdir(base_dir):
@@ -191,7 +177,7 @@ def get_validation_details(experiment, host_url, model):
     """
     Loads detailed validation results (e.g., metrics stored in results.json) and constructs URLs for images.
     """
-    val_dir = os.path.join(os.getcwd(), model, "runs", "val")
+    val_dir = os.path.join(os.getcwd(),"models", model, "runs", "val")
     exp_dir = os.path.join(val_dir, experiment)
     if not os.path.exists(exp_dir):
         return {"error": "Experiment not found"}
@@ -204,14 +190,26 @@ def get_validation_details(experiment, host_url, model):
     }
 
 def get_experimental_folder(model):
-    base_detect_dir = os.path.join(os.getcwd(), model, "runs", "val")
+    base_detect_dir = os.path.join(os.getcwd(),"models", model, "runs", "val")
     if not os.path.exists(base_detect_dir):
         os.makedirs(base_detect_dir, exist_ok=True)
     exp_dirs = [d for d in os.listdir(base_detect_dir)
                 if os.path.isdir(os.path.join(base_detect_dir, d)) and d.startswith("exp")]
-    if exp_dirs:
-        max_num = max([int(d[3:]) for d in exp_dirs if d[3:].isdigit()] or [0])
+    if "exp" not in exp_dirs:
+        return "exp"
+
+    nums = []
+    for d in exp_dirs:
+        suffix = d[3:]
+        if suffix.isdigit():
+            n = int(suffix)
+            if n > 1:
+                nums.append(n)
+
+    if not nums:
+        next_num = 2
     else:
-        max_num = 0
-    new_experiment = "exp" + str(max_num + 1)
-    return new_experiment
+        next_num = max(nums) + 1
+
+    return f"exp{next_num}"
+

@@ -10,37 +10,13 @@ validation_bp = Blueprint('validation_bp', __name__)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 yaml_path = os.path.join(current_dir, 'docs', 'validation_api.yaml')
 
-@validation_bp.route("/start", methods=["POST"])
+@validation_bp.route("/", methods=["POST"])
 @swag_from(yaml_path)
 def start_validation_route():
-    """
-    Initiates a validation run.
-
-    Expects JSON data with:
-      - source: Path to source images.
-      - groundTruth: Path to ground truth (txt files).
-      - imgSize: Image size (e.g., 640).
-      - conf: Confidence threshold (e.g., 0.25).
-      - iou: IOU threshold (e.g., 0.5).
-      - trainingRun: Identifier for the training run.
-      - model: Model name.
-
-    Returns:
-      JSON with the experiment ID.
-    """
     data = request.json
-    source = data.get("source")
-    train_run = data.get("trainingRun")
-    img_size = data.get("imgSize", "640")
-    conf = data.get("conf", "0.25")
-    iou = data.get("iou", "0.5")
-    model = data.get("model")
-
-    if not (source and train_run):
-        return jsonify({"error": "Missing required parameters"}), 400
 
     try:
-        experiment = start_validation(source, train_run, img_size, conf, iou, model)
+        experiment = start_validation(data)
         return jsonify({"experiment": experiment}), 200
     except Exception as e:
         return jsonify({"error": f"Validation start failed: {str(e)}"}), 500
@@ -109,7 +85,7 @@ def validation_runs_list():
 @swag_from(yaml_path)
 def get_validation_file(model, exp, filename):
     """todo neudělat jedno api, kde bude parametr se složkou train/val/eval"""
-    base_path = os.path.join(os.getcwd(), model, "runs", "val", exp)
+    base_path = os.path.join(os.getcwd(),"models", model, "runs", "val", exp)
     if not os.path.exists(os.path.join(base_path, filename)):
         return jsonify({"error": f"File {filename} not found in experiment {exp}"}), 404
     return send_from_directory(base_path, filename)

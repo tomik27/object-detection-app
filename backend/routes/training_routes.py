@@ -87,7 +87,6 @@ def get_evaluation():
 @training_bp.route("/file/<model>/<exp>/<filename>", methods=["GET"])
 @swag_from(yaml_path)
 def get_evaluation_file(model, exp, filename):
-    """Returns a specific file from the evaluation results."""
     base_path = os.path.join(os.getcwd(),"models", model, "runs", "train", exp)
     if not os.path.exists(os.path.join(base_path, filename)):
         return jsonify({"error": f"File {filename} not found in experiment {exp}"}), 404

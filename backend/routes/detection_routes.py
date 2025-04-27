@@ -79,5 +79,5 @@ def get_latest_images():
 @swag_from(yaml_path)
 def get_detection_image(model, exp_folder, filename):
     """Returns a specific detected image file"""
-    base_dir = os.path.join(os.getcwd(), model, "runs", "detect", exp_folder)
+    base_dir = os.path.join(os.getcwd(),"models", model, "runs", "detect", exp_folder)
     return send_from_directory(base_dir, filename)

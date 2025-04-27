@@ -1,5 +1,6 @@
 
 import datetime
+import json
 import os
 import re
 import subprocess
@@ -7,6 +8,8 @@ import threading
 from pathlib import Path
 from queue import Queue
 import yaml
+
+from services.env_utils import get_python_interpreter
 
 FOLDER_MODELS = "models"
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
@@ -43,10 +46,9 @@ def create_unique_yaml(train_dir, val_dir, classes, model, folder="yaml"):
             "names": classes,
         }, f, default_flow_style=False, allow_unicode=True)
 
-    cwd = Path(FOLDER_MODELS) / model
-    rel_path = os.path.relpath(fp.resolve(), cwd)
-    print(f"[DEBUG] YAML created: {fp.resolve()}  (rel→{rel_path})")
-    return rel_path
+    abs_path = fp.resolve()
+    print(f"[DEBUG] YAML created: {abs_path}")
+    return str(abs_path)
 
 def resolve_weights(model, user_weights):
     repo_dir = Path(FOLDER_MODELS) / model
@@ -88,16 +90,7 @@ def run_training_logic(data):
     print(f"[DEBUG] train.py = {train_py}")
     print(f"[DEBUG] cwd      = {cwd}")
 
-
-    env_name = f"{model}_mm"
-    python_path = data.get("python") # micromamba env python
-    if not python_path:
-        mm_root = Path(os.environ.get("USERPROFILE", "~")).expanduser() / "micromamba" / "envs" / env_name
-        py      = mm_root / ("python.exe" if os.name == "nt" else "bin/python")
-        print(f"[DEBUG] probing interpreter {py}")
-        if not py.is_file():
-            raise FileNotFoundError(f"Python interpreter for env '{env_name}' not found at {py}")
-        python_path = str(py)
+    python_path = get_python_interpreter(data.get("model", "yolov7"), data.get("python"))
     print(f"[DEBUG] python   = {python_path}")
 
     weights_abs = resolve_weights(model, weights_in)
@@ -132,6 +125,10 @@ def run_training_logic(data):
             print(f"[ERROR] failed to launch subprocess: {e.__class__.__name__}: {e}")
             log_queue.put(f"LAUNCH ERROR: {e}\n")
             return
+        info = json.loads(gpu_probe(python_path, cwd))
+        log_queue.put(f"[GPU-CHECK] cuda={info['available']} "
+                      f"({info['count']}×{info['name']})\n")
+        print(f"[DEBUG] GPU probe → {info}")
 
         for ln in train_process.stdout:
             log_queue.put(clean_line(ln))
@@ -169,12 +166,17 @@ def get_training_runs_logic(model):
 def get_training_run_data(model, experiment):
     print(f"[DEBUG] get_training_run_data called for model={model}, experiment={experiment}")
     folder = os.path.join(os.getcwd(), FOLDER_MODELS, model, "runs", "train", experiment)
+    print(f"[DEBUG] folder={folder}")
     opt_yaml = os.path.join(folder, "opt.yaml")
     if not os.path.exists(opt_yaml):
         raise FileNotFoundError(f"opt.yaml nenalezen: {opt_yaml}")
     opt = yaml.safe_load(open(opt_yaml, encoding="utf-8"))
+    print(f"[DEBUG] get_training_run_data opt: {opt}")
+
     img = opt.get("imgsz") or (opt.get("img_size")[0] if isinstance(opt.get("img_size"), list) else None)
+    print(f"[DEBUG] get_training_run_data img: {img}")
     batch = opt.get("batch_size")
+
     data_yaml = opt.get("data")
     ds = yaml.safe_load(open(data_yaml, encoding="utf-8"))
     result = {"experiment": experiment, "img_size": img, "batch_size": batch, "val": ds.get("val"), "classes": ds.get("names")}
@@ -187,3 +189,18 @@ def get_evaluation_data(model, experiment, host_url):
     result = {"confusion_matrix_url": base + "/confusion_matrix.png", "f1_curve_url": base + "/F1_curve.png"}
     print(f"[DEBUG] get_evaluation_data result: {result}")
     return result
+
+def gpu_probe(python_interpreter, env_cwd):
+    code = (
+        "import torch, json;"
+        "print(json.dumps({"
+        "'available': torch.cuda.is_available(),"
+        "'count': torch.cuda.device_count(),"
+        "'name': torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'cpu'"
+        "}))"
+    )
+    out = subprocess.check_output(
+        [python_interpreter, "-c", code],
+        cwd=env_cwd, text=True, encoding="utf-8")
+    return out.strip()
+
