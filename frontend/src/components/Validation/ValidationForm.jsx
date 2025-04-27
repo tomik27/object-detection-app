@@ -41,16 +41,14 @@ const ValidationForm = ({
         reader.onload = (event) => {
             try {
                 const data = yaml.load(event.target.result);
-                // Expecting keys "train", "val" and "names".
-                if (data.val && data.names) {
-                    // Update the validation parameters:
+
+                if (data.val) {
                     setValidationParams((prev) => ({
                         ...prev,
-                        sourceDirectory: data.val, // For validation, we use the "val" value
-                        classes: Array.isArray(data.names) ? data.names : [],
+                        sourceDirectory: data.val
                     }));
                 } else {
-                    console.error("YAML file does not contain the required keys: train, val, names.");
+                    console.error("YAML file does not contain the required keys: val.");
                 }
             } catch (err) {
                 console.error("Error parsing YAML:", err);
@@ -74,7 +72,6 @@ const ValidationForm = ({
     const updateClasses = (updateFnOrArray) => {
         setValidationParams((prev) => ({
             ...prev,
-            classes: typeof updateFnOrArray === "function" ? updateFnOrArray(prev.classes) : updateFnOrArray,
         }));
     };
 
@@ -82,7 +79,6 @@ const ValidationForm = ({
         <Box component="form" noValidate autoComplete="off">
             <Stack spacing={2}>
 
-                <Typography variant="h6">Validation Parameters</Typography>
                 <Stack spacing={2}>
                     <Button variant="outlined" onClick={handleYamlButtonClick}>
                         Load YAML file

@@ -136,7 +136,7 @@ const Validation = () => {
         setValidationMessage("");
 
         try {
-            const response = await fetch("/api/validation/start", {
+            const response = await fetch("/api/validation", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(payload)
@@ -189,7 +189,7 @@ const Validation = () => {
                 }}
             >
                 <Typography variant="h5" fontWeight="bold" gutterBottom textAlign="center">
-                    Model Validation
+                     Validation
                 </Typography>
                 <Divider sx={{mb: 3}}/>
 
