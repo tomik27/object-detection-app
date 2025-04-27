@@ -1,13 +1,33 @@
 import {Box, Button, Typography} from "@mui/material";
 import {FolderOpen} from "@mui/icons-material";
 
-const DirectoryPicker = ({label, directory, onSelect}) => (
-    <Box sx={{textAlign: "center"}}>
-        <Button variant="contained" size="medium" onClick={onSelect} startIcon={<FolderOpen/>}>
+const DirectoryPicker = ({ label, directory, onSelect }) => (
+    <Box
+        sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            minWidth: 0,
+            flex: 1,
+        }}
+    >
+        <Button variant="contained" size="medium" onClick={onSelect} startIcon={<FolderOpen />}>
             {label}
         </Button>
-        <Typography variant="body2">{directory || "No folder selected"}</Typography>
+        <Typography
+            variant="body2"
+            sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                width: '100%',
+            }}
+        >
+            {directory || 'No folder selected'}
+        </Typography>
     </Box>
 );
 
 export default DirectoryPicker;
+

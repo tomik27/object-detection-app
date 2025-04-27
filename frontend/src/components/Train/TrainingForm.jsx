@@ -34,14 +34,12 @@ const TrainingForm = ({
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
-                const data = yaml.load(event.target.result);
-                if (data.train && data.val && data.names) {
-                    directories.selectData(data.train);
-                    directories.selectVal(data.val);
-                    classState.setClasses([]);
-                    data.names.forEach((cls) => {
-                        classState.setClasses((prev) => [...prev, cls]);
-                    });
+             const data = yaml.load(event.target.result);
+             if (data.train && data.val && data.names) {
+                 directories.selectData(data.train);
+                 directories.selectVal(data.val);
+                 const classesArray = Array.isArray(data.names) ? data.names : Object.values(data.names);
+                 classState.setClasses(classesArray);
                 } else {
                     console.error(
                         "YAML file does not contain the required keys: train, val, names."
@@ -134,10 +132,10 @@ const TrainingForm = ({
                         <Divider/>
 
                         {/* Directory selection and class management */}
-                        <Stack direction={{xs: "column", md: "row"}} spacing={2}>
-                            <Stack spacing={2} flex={1}>
+                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                            <Stack spacing={2} flex={1} sx={{ minWidth: 0 }}>
                                 <Typography variant="h6">Files</Typography>
-                                <Stack direction={{xs: "column", md: "row"}} spacing={4}>
+                                <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
                                     <DirectoryPicker
                                         label="Training Data"
                                         directory={directories.data}
@@ -148,24 +146,19 @@ const TrainingForm = ({
                                         directory={directories.val}
                                         onSelect={directories.selectVal}
                                     />
-                                    </Stack>
-
+                                </Stack>
                                 {!hasTrainingData && (
-                                    <Typography color="error">
-                                        Please select a Training Data folder.
-                                    </Typography>
+                                    <Typography color="error">Please select a Training Data folder.</Typography>
                                 )}
                                 {!hasValidationData && (
-                                    <Typography color="error">
-                                        Please select a Validation Data folder.
-                                    </Typography>
+                                    <Typography color="error">Please select a Validation Data folder.</Typography>
                                 )}
                             </Stack>
-                            {/* Class Management */}
-                            <Stack spacing={2} flex={1}>
+
+                            <Stack spacing={2} flex={1} sx={{ minWidth: 0 }}>
                                 <Typography variant="h6">Class modal</Typography>
-                                <Stack direction={{xs: "column", md: "row"}} spacing={4} justifyContent="center">
-                                <ClassManagerModal classes={classState.classes} setClasses={classState.setClasses} />
+                                <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} justifyContent="center">
+                                    <ClassManagerModal classes={classState.classes} setClasses={classState.setClasses} />
                                     <Typography variant="body2">{classText}</Typography>
                                 </Stack>
                             </Stack>

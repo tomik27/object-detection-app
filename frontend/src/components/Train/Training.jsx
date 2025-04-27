@@ -18,6 +18,7 @@ export default function Training() {
     };
     const [selectedModel, setSelectedModel] = useState("yolov5");
     const [modelsList] = useState(["yolov5", "yolov6", "yolov7"]);
+    const [currentExperiment, setCurrentExperiment] = useState(null);
 
     useEffect(() => {
         const eventSource = new EventSource("/api/training/logs");
@@ -92,6 +93,14 @@ export default function Training() {
         }
     };
 
+    const predictNextExp = (runs) => {
+        if (!runs.length) return "exp";
+        const lastId = runs[0].id;
+        const numStr = lastId.slice(3);
+        const nextNum = numStr === "" ? 1 : Number(numStr) + 1;
+        return nextNum === 0 ? "exp" : `exp${nextNum}`;
+    };
+
 
     const [dataDirectory, setDataDirectory] = useState("C:\\diplomka\\kody\\newest_yolo\\cube");
     const [valDirectory, setValDirectory] = useState("C:\\diplomka\\kody\\newest_yolo\\cube");
@@ -122,6 +131,12 @@ export default function Training() {
     const handleTrain = async () => {
         setTrainingLog("Training started...\n");
         try {
+
+            const resList = await fetch(`/api/training/list?model=${selectedModel}`);
+            const runs = resList.ok ? await resList.json() : [];
+
+            setCurrentExperiment( predictNextExp(runs));
+
             const response = await fetch("/api/training", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
@@ -198,6 +213,11 @@ export default function Training() {
                     onStop={handleStop}
                     isProcessing={isProcessing}
                 />
+                {currentExperiment && (
+                    <Typography variant="body1" textAlign="center" sx={{mt: 2}}>
+                        Trainning result is stored in folder: {currentExperiment}
+                    </Typography>
+                )}
                 <TrainingLogs trainingLog={trainingLog}/>
             </Paper>
         </Box>
