@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
-set "ROOT=%~dp0"
+set "SCRIPT_DIR=%~dp0"
+set "ROOT=%SCRIPT_DIR%..\"
 
 rem ── najdi micromamba.exe nebo použij výchozí cestu ─────────────
 for %%I in (micromamba.exe) do set "MM=%%~$PATH:I"
@@ -27,11 +28,9 @@ echo ✅  micromamba.exe found
 
 rem 3) Spuštění BACKEND v novém okně s debugem – používá direktní cestu k micromamba
 start "BACKEND" cmd /k ^
-    "cd /d %ROOT%backend && echo ✅ cd succeeded: %cd% && echo [DEBUG] Running micromamba... && "%MM%" run -n backend_mm python app.py && echo ✅ micromamba run succeeded && pause"
+    "cd /d %ROOT%backend && echo ✅ cd succeeded: %%cd%% && echo [DEBUG] Running micromamba... && "%MM%" run -n backend_mm python app.py && echo ✅ micromamba run succeeded && pause"
 
-
-rem ── FRONTEND (React/Vite) ──────────────────────────────────────────
-start "FRONTEND" cmd /k "cd frontend && npm run dev"
-
+REM ── FRONTEND (React/Vite) ──────────────────────────────────────────
+start "FRONTEND" cmd /k "cd %ROOT%frontend && npm run dev"
 
 echo === ✅  All components are running  ===

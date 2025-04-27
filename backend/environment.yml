@@ -8,7 +8,6 @@ dependencies:
   - pyyaml
   - pip
   - flasgger
-  - oci-cli
   - psutil
   - pip:
       - opencv-python
