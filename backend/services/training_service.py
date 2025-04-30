@@ -6,9 +6,9 @@ import re
 import subprocess
 import threading
 from pathlib import Path
-from queue import Queue
+from queue import SimpleQueue  # noblocking
+from functools import partial
 import yaml
-
 from services.env_utils import get_python_interpreter
 
 FOLDER_MODELS = "models"
@@ -29,7 +29,7 @@ WEIGHTS = {
 }
 
 train_process = None
-log_queue = Queue()
+log_queue = SimpleQueue()
 
 def create_unique_yaml(train_dir, val_dir, classes, model, folder="yaml"):
     model_yaml_dir = Path(FOLDER_MODELS) / model / folder
@@ -96,7 +96,9 @@ def run_training_logic(data):
     weights_abs = resolve_weights(model, weights_in)
 
     cmd = [
-        python_path, str(train_py),
+        python_path,
+        "-u",
+        str(train_py),
         "--img", str(img_size),
         "--batch", str(batch_size),
         "--epochs", str(epochs),
@@ -113,25 +115,33 @@ def run_training_logic(data):
         try:
             train_process = subprocess.Popen(
                 cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                bufsize=1,
                 text=True,
                 encoding="utf-8",
-                errors="replace",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 cwd=cwd,
+                env={**os.environ, "PYTHONUNBUFFERED": "1"},
             )
             print(f"[DEBUG] started PID {train_process.pid}")
         except Exception as e:
             print(f"[ERROR] failed to launch subprocess: {e.__class__.__name__}: {e}")
             log_queue.put(f"LAUNCH ERROR: {e}\n")
             return
+
         info = json.loads(gpu_probe(python_path, cwd))
-        log_queue.put(f"[GPU-CHECK] cuda={info['available']} "
-                      f"({info['count']}×{info['name']})\n")
+        log_queue.put(f"[GPU-CHECK] cuda={info['available']} ({info['count']}×{info['name']})\n")
         print(f"[DEBUG] GPU probe → {info}")
 
-        for ln in train_process.stdout:
-            log_queue.put(clean_line(ln))
+        buffer = ""
+        for chunk in iter(partial(train_process.stdout.read, 1024), ''):
+            buffer += chunk
+            while "\n" in buffer:
+                line, buffer = buffer.split("\n", 1)
+                log_queue.put(clean_line(line + "\n"))
+        if buffer:
+            log_queue.put(clean_line(buffer))
+
         train_process.wait()
         log_queue.put(f"Training finished RC={train_process.returncode}\n")
         print(f"[DEBUG] trainer exited RC={train_process.returncode}")
