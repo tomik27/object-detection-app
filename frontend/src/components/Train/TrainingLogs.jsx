@@ -1,6 +1,16 @@
-import { Box, Typography } from "@mui/material";
+import {Box, Typography} from "@mui/material";
+import {useEffect, useRef} from "react";
 
-const TrainingLogs = ({ trainingLog }) => {
+const TrainingLogs = ({trainingLog}) => {
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+        const ta = textareaRef.current;
+        if (ta) {
+            ta.scrollTop = ta.scrollHeight;
+        }
+    }, [trainingLog]);
+
     return (
         <Box>
             <Typography variant="h6" textAlign="center">
@@ -8,6 +18,7 @@ const TrainingLogs = ({ trainingLog }) => {
             </Typography>
             <Box
                 component="textarea"
+                ref={textareaRef}
                 readOnly
                 value={trainingLog}
                 sx={{
@@ -21,6 +32,7 @@ const TrainingLogs = ({ trainingLog }) => {
                     resize: "none",
                     border: "none",
                     outline: "none",
+                    overflowY: "auto"
                 }}
             />
         </Box>
