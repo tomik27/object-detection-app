@@ -28,18 +28,36 @@ const TrainingForm = ({
         fileInputRef.current.click();
     };
 
-        const handleYamlUpload = (e) => {
+    const handleYamlUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
-             const data = yaml.load(event.target.result);
-             if (data.train && data.val && data.names) {
-                 directories.selectData(data.train);
-                 directories.selectVal(data.val);
-                 const classesArray = Array.isArray(data.names) ? data.names : Object.values(data.names);
-                 classState.setClasses(classesArray);
+                const data = yaml.load(event.target.result);
+                if (data.train && data.val && data.names) {
+                    const root = data.path ? data.path.replace(/\\/g, '/') : null;
+                    const isAbsolute = (p) =>
+                        /^[a-zA-Z]:[\\/]/.test(p) || p.startsWith('/');
+                    const joinPath = (base, rel) => {
+                        if (!base || isAbsolute(rel)) return rel;
+                        const cleanBase = base.replace(/[\\/]+$/, '');
+                        const cleanRel = rel.replace(/^[\\/]+/, '');
+                        return `${cleanBase}/${cleanRel}`;
+                    };
+
+                    // If path exists
+                    const trainPath = root ? joinPath(root, data.train) : data.train;
+                    const valPath   = root ? joinPath(root, data.val)   : data.val;
+
+                    directories.selectData(trainPath);
+                    directories.selectVal(valPath);
+
+                    const classesArray = Array.isArray(data.names)
+                        ? data.names
+                        : Object.values(data.names);
+                    classState.setClasses(classesArray);
                 } else {
                     console.error(
                         "YAML file does not contain the required keys: train, val, names."
@@ -51,8 +69,6 @@ const TrainingForm = ({
         };
         reader.readAsText(file);
     };
-
-
     // Numeric validations: all values must be greater than 0.
     const isImageSizeValid = trainingParams.imageSize > 0;
     const isBatchSizeValid = trainingParams.batchSize > 0;
@@ -65,7 +81,6 @@ const TrainingForm = ({
   const hasClasses = Boolean(classState.classes && classState.classes.length > 0);
     const classText =
         hasClasses ? classState.classes.join(", ").substring(0, 40) + "..." : "Please add at least one class.";
-
 
     // Overall Form Validation
     const isFormValid =
