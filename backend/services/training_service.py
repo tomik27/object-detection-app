@@ -106,9 +106,42 @@ def run_training_logic(data):
         "--weights", weights_abs,
     ]
 
+    # Optional hyperparameters
+    lr = data.get("learningRate")
+    if lr is not None:
+        cmd += ["--lr", str(lr)]
+
+    wd = data.get("weightDecay")
+    if wd is not None:
+        if model == "yolov5":
+            cmd += ["--wd", str(wd)]
+        else:
+            cmd += ["--weight-decay", str(wd)]
+
+    opt = data.get("optimizer")
+    if model == "yolov7":
+        if opt and opt.lower().startswith("adam"):
+            cmd.append("--adam")
+    else:  # yolov5
+        if opt:
+            cmd += ["--optimizer", opt]
+
+    cos_flag = data.get("cosineScheduler")  # bool or None
+    if model == "yolov7":
+        if cos_flag is False:
+            cmd.append("--linear-lr")
+    else:  # yolov5
+        if cos_flag:
+            cmd.append("--cos-lr")
+
+    dev = data.get("device")
+    if dev:
+        cmd += ["--device", str(dev)]
+
     print("[DEBUG] launch cmd →")
     for part in cmd:
         print("       ", part)
+
 
     def _worker():
         global train_process

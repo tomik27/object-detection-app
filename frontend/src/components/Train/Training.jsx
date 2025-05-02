@@ -9,15 +9,20 @@ import TrainingForm from "./TrainingForm.jsx";
 
 export default function Training() {
     const [imageSize, setImageSize] = useState(640);
-    const [batchSize, setBatchSize] = useState(16);
-    const [epochs, setEpochs] = useState(50);
+    const [batchSize, setBatchSize] = useState(8);
+    const [epochs, setEpochs] = useState(5);
+    const [optimizer, setOptimizer] = useState("");
+    const [device, setDevice] = useState("");
+
+    const [cosineScheduler, setCosineScheduler] = useState(false);
+
     const [isProcessing, setIsProcessing] = useState(false);
     const weightsOptions = {
         yolov5: ["yolov5s.pt", "yolov5m.pt", "yolov5l.pt"],
         yolov7: ["yolov7.pt", "yolov7-tiny.pt", "yolov7-e6.pt", "yolov7-d6.pt", "yolov7x.pt"],
     };
     const [selectedModel, setSelectedModel] = useState("yolov5");
-    const [modelsList] = useState(["yolov5", "yolov6", "yolov7"]);
+    const [modelsList] = useState(["yolov5", "yolov7"]);
     const [currentExperiment, setCurrentExperiment] = useState(null);
 
     useEffect(() => {
@@ -26,7 +31,7 @@ export default function Training() {
         eventSource.onmessage = function (event) {
             const line = event.data.endsWith("\n") ? event.data : event.data + "\n";
             setTrainingLog(prev => prev + line);
-            if (event.data.includes("Results saved to","Trénink ukončen","epochs completed in")) {
+            if (event.data.includes("Results saved to","RuntimeError","epochs completed in ", "finished" )) {
                 setIsProcessing(false);
                 eventSource.close();
             } else {
@@ -59,7 +64,6 @@ export default function Training() {
 
     const [selectedWeight, setSelectedWeight] = useState("yolov5s.pt");
     const [weightsList, setWeightsList] = useState(weightsOptions[selectedModel]);
-
     useEffect(() => {
         setWeightsList(weightsOptions[selectedModel]);
         setSelectedWeight(weightsOptions[selectedModel][0]);
@@ -125,6 +129,12 @@ export default function Training() {
         setBatchSize,
         epochs,
         setEpochs,
+        optimizer,
+        setOptimizer,
+        device,
+        setDevice,
+        cosineScheduler,
+        setCosineScheduler
     };
 
     // --- Start train ---
@@ -144,6 +154,9 @@ export default function Training() {
                     imageSize,
                     batchSize,
                     epochs,
+                    optimizer,
+                    device,
+                    cosineScheduler,
                     weights: selectedWeight,
                     model: selectedModel,
                     dataDir: dataDirectory,
@@ -190,13 +203,7 @@ export default function Training() {
         >
             <Paper
                 elevation={3}
-                sx={{
-                    p: 4,
-                    borderRadius: 2,
-                    width: "80vw",
-                    maxWidth: "90%",
-                    minWidth: "600px",
-                }}
+                sx={{ p: 4, borderRadius: 2, width: "80vw", maxWidth: "90%", minWidth: "600px" }}
             >
                 <Typography variant="h5" fontWeight="bold" gutterBottom textAlign="center">
                     Training
@@ -215,7 +222,7 @@ export default function Training() {
                 />
                 {currentExperiment && (
                     <Typography variant="body1" textAlign="center" sx={{mt: 2}}>
-                        Trainning result is stored in folder: {currentExperiment}
+                        Trainning result will be stored in folder: {currentExperiment}
                     </Typography>
                 )}
                 <TrainingLogs trainingLog={trainingLog}/>
