@@ -7,19 +7,23 @@ const NumberInput = ({
                          onChange,
                          error,
                          helperText,
+                         ...textFieldProps
                      }) => {
     const handleChange = (e) => {
-        onChange(Number(e.target.value));
+        const val = e.target.value;
+        onChange(val === '' ? '' : Number(val));
     };
+
     return (
         <TextField
             label={label}
             type="number"
             value={value}
             onChange={handleChange}
-            fullWidth
             error={error}
-            helperText={error ? helperText : ""}
+            helperText={error ? helperText : helperText}
+            fullWidth
+            {...textFieldProps}
         />
     );
 };
