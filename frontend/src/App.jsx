@@ -1,13 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import {AppBar, Toolbar, Typography, Button, Box, CssBaseline} from "@mui/material";
-import Annotator from "./components/Annotate/Annotator";
-import Training from "./components/Train/Training.jsx";
-import Detection from "./components/Detect/Detection.jsx";
+import Annotator from "./components/Annotation/Annotator";
+import Training from "./components/Training/Training.jsx";
+import Detection from "./components/Detection/Detection.jsx";
 import Evaluation from "./components/Evaluation/Evaluation.jsx";
 import Validation from "./components/Validation/Validation.jsx";
 import GenericMenu from "./components/Common/GenericMenu.jsx";
 import ValidationHistory from "./components/Validation/ValidationHistory.jsx";
-import DetectionHistory from "./components/Detect/DetectionHistory.jsx";
+import DetectionHistory from "./components/Detection/DetectionHistory.jsx";
 import HomePage from "./components/Common/HomePage.jsx";
 
 function App() {
@@ -17,7 +17,7 @@ function App() {
     ];
 
     const dectectionionMenuItems = [
-        { label: "Detection", link: "/detection/new" },
+        { label: "New detection", link: "/detection/new" },
         { label: "History of detections", link: "/detection/history" },
     ];
     const validationMenuItems = [

@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import {Stack, Paper, Button, Checkbox, FormControlLabel} from "@mui/material";
-import ClassManagerModal from "../Train/ClassManagerModal.jsx";
+import ClassManagerModal from "../Training/ClassManagerModal.jsx";
 
 class ActionBar extends Component {
     render() {
