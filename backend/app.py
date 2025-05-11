@@ -3,7 +3,6 @@ from flask import Flask
 from flask_cors import CORS
 
 from routes.detection_routes import detect_bp
-from routes.evaluation_routes import evaluation_bp
 from routes.training_routes import training_bp
 from routes.validation_routes import validation_bp
 from flasgger import Swagger
@@ -12,10 +11,15 @@ from flasgger import Swagger
 def create_app():
     app = Flask(__name__)
     swagger = Swagger(app)
-    CORS(app)
+
+    CORS(app, origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176"
+    ])
     app.register_blueprint(training_bp, url_prefix='/api/training')
     app.register_blueprint(detect_bp, url_prefix='/api/detection')
-    app.register_blueprint(evaluation_bp, url_prefix='/api/evaluation')
     app.register_blueprint(validation_bp, url_prefix='/api/validation')
 
     return app
