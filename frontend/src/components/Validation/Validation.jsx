@@ -10,7 +10,7 @@ const Validation = () => {
     // Combined validation parameters.
     const [validationParams, setValidationParams] = useState({
         imageSize: 640,
-        sourceDirectory: "C:\\diplomka\\kody\\newest_yolo\\cube",
+        sourceDirectory: "",
         classes: [],
         confidenceThreshold: 0.25,
         iouThreshold: 0.5,

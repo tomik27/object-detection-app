@@ -75,7 +75,7 @@ const ValidationForm = ({
 
     const classText =
         hasClasses ? classes.join(", ").substring(0, 70) + "..." : "Please add at least one class.";
-    const updateClasses = (updateFnOrArray) => {
+    const updateClasses = () => {
         setValidationParams((prev) => ({
             ...prev,
         }));
