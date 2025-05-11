@@ -1,4 +1,4 @@
-import {computeRectFrom3PointsAnyOrder} from "../src/components/Annotate/Utils.jsx";
+import {computeRectFrom3PointsAnyOrder} from "../src/components/Annotation/Utils.jsx";
 
 describe('computeRectFrom3PointsAnyOrder', () => {
     const testCases = [

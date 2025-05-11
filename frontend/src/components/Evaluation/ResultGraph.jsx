@@ -106,10 +106,10 @@ const ResultGraph = ({ experimentId, model }) => {
         const labels = data.map((r) => r.epoch);
 
         const lossSets = [
-          { key: "train_box_loss",  label: "Train Box",  color: "#8884d8" },
-          { key: "train_obj_loss",  label: "Train Obj", color: "#82ca9d" },
-          { key: "train_cls_loss",  label: "Train Cls", color: "#FFBB28"},
-          { key: "train_total_loss",label: "Train Total",     color: "#444444"},
+          { key: "train_box_loss",  label: "Training Box",  color: "#8884d8" },
+          { key: "train_obj_loss",  label: "Training Obj", color: "#82ca9d" },
+          { key: "train_cls_loss",  label: "Training Cls", color: "#FFBB28"},
+          { key: "train_total_loss",label: "Training Total",     color: "#444444"},
           { key: "val_box_loss",    label: "Val Box", color: "#888888"},
           { key: "val_obj_loss",    label: "Val Obj ", color: "#AAAAAA"},
           { key: "val_cls_loss",    label: "Val Cls", color: "#CCCCCC"},
