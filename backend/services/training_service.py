@@ -50,27 +50,33 @@ def create_unique_yaml(train_dir, val_dir, classes, model, folder="yaml"):
     print(f"[DEBUG] YAML created: {abs_path}")
     return str(abs_path)
 
-def resolve_weights(model, user_weights):
+def resolve_weights(model: str, user_weights):
     repo_dir = Path(FOLDER_MODELS) / model
 
-    def _abs(p):
+    def _abs(p: Path):
         return p if p.is_absolute() else (repo_dir / p)
 
-    if user_weights:
-        p = _abs(Path(user_weights))
-        print(f"[DEBUG] user‑supplied weights ⇒ {p}")
-        if p.is_file():
-            return str(p.resolve())
-        raise FileNotFoundError(f"Explicit weights '{user_weights}' not found at {p}")
+    if not user_weights:
+        raise ValueError("No weights specified. Provide --weights or choose a training run.")
 
-    for cand in WEIGHTS.get(model, []):
-        cp = repo_dir / cand
-        print(f"[DEBUG] probing candidate {cp.name}")
-        if cp.is_file():
-            print(f"[INFO] auto‑picked weights: {cand}")
-            return str(cp.resolve())
+    # 1) training run best-pt
+    if isinstance(user_weights, dict) and user_weights.get("type") == "runs":
+        run_id = user_weights["value"]
+        base_dir = Path(os.getcwd()) / FOLDER_MODELS / model / "runs" / "train"
+        run_dir = base_dir / run_id / "weights"
+        p = run_dir / "best.pt"
+        print(f"[DEBUG] user-supplied run checkpoint ⇒ {p}")
 
-    raise FileNotFoundError(f"No weights found in {repo_dir}. Provide --weights or place a .pt file there.")
+    # 2) pretrained weight
+    else:
+        name = user_weights if isinstance(user_weights, str) else user_weights.get("value")
+        p = _abs(Path(name))
+        print(f"[DEBUG] user-supplied weights ⇒ {p}")
+
+    if p.is_file():
+        return str(p.resolve())
+    else:
+        raise FileNotFoundError(f"Weights not found at expected path: {p}")
 
 def run_training_logic(data):
     global train_process

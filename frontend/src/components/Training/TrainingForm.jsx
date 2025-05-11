@@ -26,7 +26,8 @@ const TrainingForm = ({
                           classState,
                           onTrain,
                           onStop,
-                          isProcessing
+                          isProcessing,
+                          trainingRuns
                       }) => {
     const [expanded, setExpanded] = useState(true);
     const fileInputRef = useRef(null);
@@ -147,7 +148,7 @@ const TrainingForm = ({
 
                         {/* Model and weights selection */}
                         <Stack direction={{xs: "column", md: "row"}} spacing={2}>
-                            <ModelWeightsSelect models={models} weights={weights}/>
+                            <ModelWeightsSelect models={models} weights={weights} trainingRuns={trainingRuns} />
                         </Stack>
 
                         <Divider/>

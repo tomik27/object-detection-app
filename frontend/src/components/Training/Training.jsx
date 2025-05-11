@@ -24,6 +24,29 @@ export default function Training() {
     const [selectedModel, setSelectedModel] = useState("yolov5");
     const [modelsList] = useState(["yolov5", "yolov7"]);
     const [currentExperiment, setCurrentExperiment] = useState(null);
+    const [trainingRuns, setTrainingRuns] = useState([]);
+
+    useEffect(() => {
+        async function fetchTrainingRuns() {
+            try {
+                const response = await fetch(`/api/training/list?model=${selectedModel}`);
+                if (!response.ok) {
+                    throw new Error("Error fetching training runs");
+                }
+                const runs = await response.json();
+                setTrainingRuns(runs);
+                if (runs.length > 0) {
+                    setSelectedWeight(runs[0].id);
+                }
+            } catch (err) {
+                console.error("Error fetching training runs:", err);
+            }
+        }
+
+        if (selectedModel) {
+            fetchTrainingRuns();
+        }
+    }, [selectedModel]);
 
     useEffect(() => {
         const eventSource = new EventSource("/api/training/logs");
@@ -106,8 +129,8 @@ export default function Training() {
     };
 
 
-    const [dataDirectory, setDataDirectory] = useState("C:\\diplomka\\kody\\newest_yolo\\cube");
-    const [valDirectory, setValDirectory] = useState("C:\\diplomka\\kody\\newest_yolo\\cube");
+    const [dataDirectory, setDataDirectory] = useState("");
+    const [valDirectory, setValDirectory] = useState("");
     const directories = {
         data: dataDirectory,
         val: valDirectory,
@@ -115,7 +138,7 @@ export default function Training() {
         selectVal: handleSelectValDir,
     };
 
-    const [classes, setClasses] = useState(["cube", "cha"]);
+    const [classes, setClasses] = useState(["dog", "tree"]);
     const classState = {
         classes, setClasses
     };
@@ -219,6 +242,7 @@ export default function Training() {
                     onTrain={handleTrain}
                     onStop={handleStop}
                     isProcessing={isProcessing}
+                    trainingRuns={trainingRuns}
                 />
                 {currentExperiment && (
                     <Typography variant="body1" textAlign="center" sx={{mt: 2}}>
