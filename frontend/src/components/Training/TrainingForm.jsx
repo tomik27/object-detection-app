@@ -97,6 +97,7 @@ const TrainingForm = ({
     const isEpochsValid = epochs > 0;
     const areNumericParamsValid = isImageSizeValid && isBatchSizeValid && isEpochsValid;
 
+    const hasWeight = Boolean(weights.selected);
     const hasTrainingData = Boolean(directories.data);
     const hasValidationData = Boolean(directories.val);
     const hasClasses = Boolean(classState.classes && classState.classes.length > 0);
@@ -105,7 +106,7 @@ const TrainingForm = ({
 
     // Overall Form Validation
     const isFormValid =
-        areNumericParamsValid && hasTrainingData && hasValidationData && hasClasses;
+        areNumericParamsValid && hasTrainingData && hasValidationData && hasClasses && hasWeight;
 
     return (
         <Box>

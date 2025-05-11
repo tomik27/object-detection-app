@@ -36,8 +36,9 @@ def stop_training():
 def list_training_runs():
     """Returns a list of training runs for a specified model."""
     model = request.args.get("model", "yolov5")
+    include_all = request.args.get("includeAll", False)
     try:
-        runs = get_training_runs_logic(model)
+        runs = get_training_runs_logic(model, include_all)
         return jsonify(runs), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -48,6 +49,7 @@ def stream_logs():
     def generate():
         while True:
             line = log_queue.get()  # Blokující vyčítání nové zprávy
+            print(line)
             yield f"data: {line}\n\n"
     return Response(generate(), mimetype="text/event-stream")
 

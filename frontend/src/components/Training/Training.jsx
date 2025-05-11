@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {
     Box,
     Typography,
@@ -13,8 +13,10 @@ export default function Training() {
     const [epochs, setEpochs] = useState(5);
     const [optimizer, setOptimizer] = useState("");
     const [device, setDevice] = useState("");
-
     const [cosineScheduler, setCosineScheduler] = useState(false);
+
+    const stoppedRef = useRef(false);
+    const eventSourceRef = useRef(null);
 
     const [isProcessing, setIsProcessing] = useState(false);
     const weightsOptions = {
@@ -36,7 +38,7 @@ export default function Training() {
                 const runs = await response.json();
                 setTrainingRuns(runs);
                 if (runs.length > 0) {
-                    setSelectedWeight(runs[0].id);
+                    //setSelectedWeight(runs[0].id);
                 }
             } catch (err) {
                 console.error("Error fetching training runs:", err);
@@ -48,36 +50,33 @@ export default function Training() {
         }
     }, [selectedModel]);
 
-    useEffect(() => {
-        const eventSource = new EventSource("/api/training/logs");
+    const createEventSource = () => {
+        const es = new EventSource("/api/training/logs");
+        stoppedRef.current = false;
+        eventSourceRef.current = es;
 
-        eventSource.onmessage = function (event) {
+        es.onmessage = (event) => {
+            if (stoppedRef.current) return;
+
             const line = event.data.endsWith("\n") ? event.data : event.data + "\n";
-            setTrainingLog(prev => prev + line);
-            if (event.data.includes("Results saved to","RuntimeError","epochs completed in ", "finished" )) {
+            setTrainingLog((prev) => prev + line);
+
+            const doneRE = /(Results saved to|RuntimeError|epochs completed in|finished)/;
+            if (doneRE.test(event.data)) {
                 setIsProcessing(false);
-                eventSource.close();
+                es.close();
             } else {
                 setIsProcessing(true);
             }
         };
 
-        eventSource.onerror = function (err) {
-            console.error("Error in log stream:", err);
-            eventSource.close();
-            setIsProcessing(false);
-        };
+        return es;
+    };
 
-            // unmount connect
-        return () => {
-            eventSource.close();
-            setIsProcessing(false);
-        };
-    }, []);
     useEffect(() => {
-        setWeightsList(weightsOptions[selectedModel]);
-        setSelectedWeight(weightsOptions[selectedModel][0]);
-    }, [selectedModel]);
+        const es = createEventSource();
+        return () => es.close();
+    }, []);
 
     const models = {
         selected: selectedModel,
@@ -85,11 +84,21 @@ export default function Training() {
         list: modelsList,
     };
 
-    const [selectedWeight, setSelectedWeight] = useState("yolov5s.pt");
-    const [weightsList, setWeightsList] = useState(weightsOptions[selectedModel]);
+    const firstValue = weightsOptions[selectedModel]?.[0] ?? "";
+
+    const [selectedWeight, setSelectedWeight] = useState({
+        type: "weights",
+        value: firstValue,
+    });
+    const [weightsList, setWeightsList] = useState(weightsOptions[selectedModel] ?? []);
+
     useEffect(() => {
-        setWeightsList(weightsOptions[selectedModel]);
-        setSelectedWeight(weightsOptions[selectedModel][0]);
+        const newList = weightsOptions[selectedModel] ?? [];
+        setWeightsList(newList);
+        setSelectedWeight({
+            type: "weights",
+            value: newList[0] ?? "",
+        });
     }, [selectedModel]);
 
     const weights = {
@@ -97,6 +106,7 @@ export default function Training() {
         setSelected: setSelectedWeight,
         list: weightsList,
     };
+
 
     const handleSelectDataDir = (input = null) => {
         if (typeof input === "string") {
@@ -165,10 +175,10 @@ export default function Training() {
         setTrainingLog("Training started...\n");
         try {
 
-            const resList = await fetch(`/api/training/list?model=${selectedModel}`);
+            const resList = await fetch(`/api/training/list?includeAll=True&model=${selectedModel}`);
             const runs = resList.ok ? await resList.json() : [];
 
-            setCurrentExperiment( predictNextExp(runs));
+            setCurrentExperiment(predictNextExp(runs));
 
             const response = await fetch("/api/training", {
                 method: "POST",
@@ -189,6 +199,8 @@ export default function Training() {
             });
             if (response.ok) {
                 setTrainingLog((prev) => prev + "Training initiated.\n");
+                stoppedRef.current = false
+                createEventSource();
                 setIsProcessing(true);
             } else {
                 setTrainingLog((prev) => prev + "Failed to start training.\n");
@@ -198,8 +210,8 @@ export default function Training() {
         }
     };
 
-    // --- Stop train ---
     const handleStop = async () => {
+        stoppedRef.current = true;
         setIsProcessing(false);
         try {
             const response = await fetch("/api/training/stop", {method: "POST"});
@@ -226,7 +238,7 @@ export default function Training() {
         >
             <Paper
                 elevation={3}
-                sx={{ p: 4, borderRadius: 2, width: "80vw", maxWidth: "90%", minWidth: "600px" }}
+                sx={{p: 4, borderRadius: 2, width: "80vw", maxWidth: "90%", minWidth: "600px"}}
             >
                 <Typography variant="h5" fontWeight="bold" gutterBottom textAlign="center">
                     Training

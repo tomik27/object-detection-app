@@ -3,13 +3,17 @@ import PropTypes from "prop-types";
 import {FormControl, InputLabel, MenuItem, Select, ToggleButton, ToggleButtonGroup,} from "@mui/material";
 
 const ModelWeightsSelect = ({ models, weights, trainingRuns }) => {
-    const [source, setSource] = useState("weights"); // "weights" | "runs"
+    const source = weights.selected?.type ?? "weights"; // "weights" | "runs"
 
-    const handleSourceChange = (event, newSource) => {
-        if (newSource) {
-            setSource(newSource);
-            weights.setSelected("");
-        }
+    const handleSourceChange = (_, newSource) => {
+        if (!newSource || newSource === source) return;
+
+        const defaultValue =
+            newSource === "weights"
+                ? weights.list?.[0] ?? ""
+                : trainingRuns?.[0]?.id ?? "";
+
+        weights.setSelected({ type: newSource, value: defaultValue });
     };
 
     const options =

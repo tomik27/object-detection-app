@@ -168,7 +168,7 @@ def run_training_logic(data):
             log_queue.put(f"LAUNCH ERROR: {e}\n")
             return
 
-        info = json.loads(gpu_probe(python_path, cwd))
+        info = json.loads(gpu_data(python_path, cwd))
         log_queue.put(f"[GPU-CHECK] cuda={info['available']} ({info['count']}×{info['name']})\n")
         print(f"[DEBUG] GPU probe → {info}")
 
@@ -198,17 +198,31 @@ def stop_training_logic():
         return {"message": "Training stopped"}
     raise RuntimeError("No training process to stop")
 
-def get_training_runs_logic(model):
-    print(f"[DEBUG] get_training_runs_logic called for model={model}")
+def get_training_runs_logic(model, include_all = False):
+    print(f"[DEBUG] get_training_runs_logic called for model={model}, include_all={include_all}")
     base_dir = os.path.join(os.getcwd(), FOLDER_MODELS, model, "runs", "train")
     runs = []
     if os.path.exists(base_dir):
         for run_dir in os.listdir(base_dir):
             full_path = os.path.join(base_dir, run_dir)
-            if os.path.isdir(full_path) and os.path.exists(os.path.join(full_path, "weights", "best.pt")):
-                ts = datetime.datetime.fromtimestamp(os.path.getctime(full_path)).isoformat() + "Z"
-                runs.append({"id": run_dir, "name": run_dir, "timestamp": ts, "path": full_path})
+            if not os.path.isdir(full_path):
+                continue
+
+            has_best = os.path.exists(os.path.join(full_path, "weights", "best.pt"))
+            if include_all or has_best:
+                ts = datetime.datetime.fromtimestamp(
+                    os.path.getctime(full_path)
+                ).isoformat() + "Z"
+                runs.append({
+                    "id": run_dir,
+                    "name": run_dir,
+                    "timestamp": ts,
+                    "path": full_path,
+                    "has_best": has_best
+                })
+
         runs.sort(key=lambda x: x["timestamp"], reverse=True)
+
     print(f"[DEBUG] Found runs: {runs}")
     return runs
 
@@ -239,7 +253,7 @@ def get_evaluation_data(model, experiment, host_url):
     print(f"[DEBUG] get_evaluation_data result: {result}")
     return result
 
-def gpu_probe(python_interpreter, env_cwd):
+def gpu_data(python_interpreter, env_cwd):
     code = (
         "import torch, json;"
         "print(json.dumps({"
