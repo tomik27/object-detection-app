@@ -114,6 +114,7 @@ const DetectionForm = ({
                 <Button
                     variant="contained"
                     color="primary"
+                    fullWidth
                     onClick={onDetect}
                     disabled={!isFormValid}
                 >
