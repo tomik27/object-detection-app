@@ -16,7 +16,7 @@ import ResultGraph from "./ResultGraph.jsx";
 
 const EvaluationScreen = () => {
     const [trainingRuns, setTrainingRuns] = useState([]);
-    const [modelsList] = useState(["yolov5", "yolov7", "yolov8"]); // Případně doplňte další
+    const [modelsList] = useState(["yolov5", "yolov7"]);
     const [selectedTrain, setSelectedTrain] = useState("");
     const [selectedModel, setSelectedModel] = useState("");
     const [evaluationData, setEvaluationData] = useState(null);
@@ -111,7 +111,7 @@ const EvaluationScreen = () => {
                 }}
             >
                 <Typography variant="h5" gutterBottom align="center">
-                    Training Run Evaluation
+                    Training Run History
                 </Typography>
 
                 {/* Selection for model and training run */}
@@ -132,7 +132,7 @@ const EvaluationScreen = () => {
                         </Select>
                     </FormControl>
                     <FormControl sx={{width: "50%"}}>
-                        <InputLabel id="train-run-select-label">Vyberte tréninkový běh</InputLabel>
+                        <InputLabel id="train-run-select-label">Select training run</InputLabel>
                         <Select
                             labelId="train-run-select-label"
                             value={selectedTrain}

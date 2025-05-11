@@ -14,7 +14,7 @@ import {
 
 const ValidationScreen = () => {
     const [validationRuns, setValidationRuns] = useState([]);
-    const [modelsList] = useState(["yolov5", "yolov7", "yolov8"]);
+    const [modelsList] = useState(["yolov5", "yolov7"]);
     const [selectedValidation, setSelectedValidation] = useState("");
     const [selectedModel, setSelectedModel] = useState("");
     const [validationData, setValidationData] = useState(null);

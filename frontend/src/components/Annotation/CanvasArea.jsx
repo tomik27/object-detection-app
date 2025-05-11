@@ -33,7 +33,6 @@ export default function CanvasArea({
         img.src = image;
 
         img.onload = () => {
-            // Zjistíme originální rozměry obrázku
             const originalWidth = img.width;
             const originalHeight = img.height;
             const aspectRatio = originalHeight / originalWidth;
@@ -50,11 +49,9 @@ export default function CanvasArea({
             canvas.width = newWidth;
             canvas.height = newHeight;
 
-            // Vykreslíme obrázek do canvasu se zachováním poměru
             ctx.clearRect(0, 0, newWidth, newHeight);
             ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
-            // Vykreslení existujících anotací
             annotations.forEach((ann) => {
                 if (!ann.corners) return;
                 const corners = ann.corners.map((c) => denormalize(c.x, c.y, canvas));

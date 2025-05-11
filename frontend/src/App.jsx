@@ -13,16 +13,16 @@ import HomePage from "./components/Common/HomePage.jsx";
 function App() {
     const trainingMenuItems = [
         { label: "New training", link: "/training/new" },
-        { label: "History of training", link: "/training/history" },
+        { label: "Training history", link: "/training/history" },
     ];
 
     const dectectionionMenuItems = [
         { label: "New detection", link: "/detection/new" },
-        { label: "History of detections", link: "/detection/history" },
+        { label: "Detection history", link: "/detection/history" },
     ];
     const validationMenuItems = [
         { label: "New validation", link: "/validation/new" },
-        { label: "History of validations", link: "/validation/history" },
+        { label: "Validation History", link: "/validation/history" },
     ];
     return (
         <Router>

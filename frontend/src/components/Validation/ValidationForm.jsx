@@ -12,7 +12,7 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import ClassManagerModal from "../Train/ClassManagerModal.jsx";
+import ClassManagerModal from "../Training/ClassManagerModal.jsx";
 import yaml from "js-yaml";
 import {useRef} from "react";
 
@@ -33,7 +33,8 @@ const ValidationForm = ({
         fileInputRef.current.click();
     };
 
-    // YAML file upload handler:
+    const isAbsolute = (p) => p.startsWith('/') || /^[A-Za-z]:[\\/]/.test(p);
+    const joinPaths = (a, b) => a.replace(/[/\\]+$/, '') + '/' + b;
     const handleYamlUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -41,21 +42,26 @@ const ValidationForm = ({
         reader.onload = (event) => {
             try {
                 const data = yaml.load(event.target.result);
-
-                if (data.val) {
-                    setValidationParams((prev) => ({
-                        ...prev,
-                        sourceDirectory: data.val
-                    }));
-                } else {
+                const basePath = data.path;
+                const rawVal = data.val;
+                if (!rawVal) {
                     console.error("YAML file does not contain the required keys: val.");
+                    return;
                 }
+                const sourceDirectory = isAbsolute(rawVal)
+                    ? rawVal
+                    : (basePath ? joinPaths(basePath, rawVal) : rawVal);
+                setValidationParams((prev) => ({
+                    ...prev,
+                    sourceDirectory
+                }));
             } catch (err) {
                 console.error("Error parsing YAML:", err);
             }
         };
         reader.readAsText(file);
     };
+
 
     // Destructure values from validationParams.
     const {imageSize, sourceDirectory, classes, confidenceThreshold, iouThreshold} = validationParams;

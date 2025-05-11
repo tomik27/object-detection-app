@@ -10,14 +10,25 @@ export default defineConfig({
     },
   server: {
     proxy: {
-      // Když v kódu zavoláte fetch("/api/...")
-      // Vite ho přesměruje na "http://localhost:5000/api/..."
+      // when fetch("/api/...")
+      // Vite redirect to "http://localhost:5000/api/..."
       "/api": {
         target: "http://localhost:5000",
         changeOrigin: true,
         secure: false,
-        // Volitelně: pokud chcete, aby se '/api' odstranilo, použijte rewrite
-        // rewrite: (path) => path.replace(/^\/api/, '')
+        ws: false,
+        timeout: 0,          // no idle‐timeout
+        headers: {
+          Connection: 'keep-alive'  // kkep alive tcp
+        },
+        configure(proxy) {
+          proxy.on('proxyRes', (proxyRes, req) => {
+            if (req.url && req.url.includes('/training/logs')) {
+              proxyRes.headers['Cache-Control'] = 'no-cache'
+              proxyRes.headers['X-Accel-Buffering'] = 'no'
+            }
+          })
+        }
       },
     },
   }

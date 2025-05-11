@@ -13,7 +13,7 @@ export default function Annotator() {
     const [image, setImage] = useState(null);
 
     // Directory handle for saving files.
-    const [directoryHandle, setDirectoryHandle] = useState("C:\\diplomka\\data\\default_store");
+    const [directoryHandle, setDirectoryHandle] = useState("");
 
     const [annotations, setAnnotations] = useState([]);
     const [currentPoints, setCurrentPoints] = useState([]);

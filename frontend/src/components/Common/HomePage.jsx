@@ -1,7 +1,7 @@
 const HomePage = () => {
     return (
         <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold mb-4">Welcome to My Application</h1>
+            <h1 className="text-3xl font-bold mb-4">Welcome to Application</h1>
             <p className="text-lg mb-6">
                 This application is designed to simplify and streamline complex workflows by integrating various tools and modules into one unified platform. Whether you are managing data, analyzing reports, or collaborating with a team, our solution offers the features you need in a clean and user-friendly interface.
             </p>
@@ -18,6 +18,9 @@ const HomePage = () => {
                 </li>
                 <li>
                     <strong>Training Module:</strong> Lets users train models using the annotated data with just a few clicks.
+                </li>
+                <li>
+                    <strong>Validation Module:</strong> Lets users train models using the annotated data with just a few clicks..
                 </li>
                 <li>
                     <strong>Detection Module:</strong> Provides real-time detection capabilities using trained models.

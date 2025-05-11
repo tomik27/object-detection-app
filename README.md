@@ -64,7 +64,7 @@ bash install.sh
 This will:
 
 - Create the `backend_env` (Flask backend)
-- Clone YOLOv5 and YOLOv7, and create their environments: `yolo5_env`, `yolo7_env`
+- Clone YOLOv5 and YOLOv7, and create their environments: `yolov5_env`, `yolov7_env`
 - Install frontend dependencies using `npm install`
 
 ---
