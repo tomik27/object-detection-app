@@ -39,7 +39,7 @@ const ModelWeightsSelect = ({ models, weights, trainingRuns }) => {
                 </Select>
             </FormControl>
 
-            {// Toggle between weights and training runs }
+            {/* Toggle between weights and training runs */}
             <ToggleButtonGroup
                 value={source}
                 exclusive
