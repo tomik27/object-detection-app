@@ -1,12 +1,13 @@
-import { useRef, useEffect } from "react";
-import { Box } from "@mui/material";
-import { denormalize } from "./utils";
+import {useRef, useEffect} from "react";
+import {Box} from "@mui/material";
+import {denormalize} from "./utils";
 
 export default function CanvasArea({
                                        image,
                                        annotations,
                                        currentPoints,
                                        onCanvasClick,
+                                       classList
                                    }) {
     const canvasRef = useRef(null);
 
@@ -18,7 +19,7 @@ export default function CanvasArea({
         const x = (event.clientX - rect.left) / canvas.width;
         const y = (event.clientY - rect.top) / canvas.height;
 
-        onCanvasClick({ x, y, canvas });
+        onCanvasClick({x, y, canvas});
     };
 
     useEffect(() => {
@@ -64,9 +65,16 @@ export default function CanvasArea({
                 ctx.strokeStyle = "blue";
                 ctx.lineWidth = 2;
                 ctx.stroke();
+                //className
+                const className = classList[ann.classIndex] || 'Unknown';
+                ctx.font = '16px sans-serif';
+                ctx.textBaseline = 'top';
+                ctx.fillStyle = 'blue';
+                const labelX = corners[0].x + 4;
+                const labelY = corners[0].y + 4;
+                ctx.fillText(className, labelX, labelY);
             });
 
-            // Vykreslení aktuálních bodů
             currentPoints.forEach((pt) => {
                 ctx.beginPath();
                 ctx.arc(pt.x * canvas.width, pt.y * canvas.height, 5, 0, 2 * Math.PI);
@@ -89,7 +97,7 @@ export default function CanvasArea({
         >
             <canvas
                 ref={canvasRef}
-                style={{ display: "block", cursor: "crosshair" }}
+                style={{display: "block", cursor: "crosshair"}}
                 onClick={handleCanvasClick}
             />
         </Box>

@@ -63,8 +63,8 @@ export default function Annotator() {
     };
 
     // Canvas click: Collect three points for an annotation.
-    const handleCanvasClick = ({ x, y, canvas }) => {
-        setCurrentPoints((prev) => [...prev, { x, y }]);
+    const handleCanvasClick = ({x, y, canvas}) => {
+        setCurrentPoints((prev) => [...prev, {x, y}]);
         if (currentPoints.length === 2) {
             const [p1, p2] = currentPoints.map((pt) =>
                 denormalize(pt.x, pt.y, canvas)
@@ -75,7 +75,7 @@ export default function Annotator() {
                 ? computeRectFrom3PointsAnyOrder(p1, p2, p3)
                 : computeAxisAlignedRect([p1, p2, p3]);
 
-            const { corners, center, width, height, angle } = rect;
+            const {corners, center, width, height, angle} = rect;
             const normCorners = corners.map((c) => normalize(c.x, c.y, canvas));
 
             const tempAnn = {
@@ -96,7 +96,6 @@ export default function Annotator() {
         }
     };
 
-    // ---------------------------------------------------------------------------
     // Change default directory.
     const handleChangeDefaultDir = async () => {
         if (!window.showDirectoryPicker) {
@@ -137,7 +136,7 @@ export default function Annotator() {
 
         if (directoryHandle) {
             try {
-                const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+                const fileHandle = await directoryHandle.getFileHandle(fileName, {create: true});
                 const writable = await fileHandle.createWritable();
                 await writable.write(content);
                 await writable.close();
@@ -145,7 +144,7 @@ export default function Annotator() {
                 console.error("Error saving file:", err);
             }
         } else {
-            const blob = new Blob([content], { type: "text/plain" });
+            const blob = new Blob([content], {type: "text/plain"});
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = fileName;
@@ -205,7 +204,7 @@ export default function Annotator() {
                 minHeight: "100vh",
             }}
         >
-            <Typography variant="h5" sx={{ mb: 2 }}>
+            <Typography variant="h5" sx={{mb: 2}}>
                 Image Annotation
             </Typography>
 
@@ -242,6 +241,7 @@ export default function Annotator() {
                     currentPoints={currentPoints}
                     pendingAnnotation={pendingAnnotation}
                     onCanvasClick={handleCanvasClick}
+                    classList={classList}
                 />
             </Paper>
             <AnnotationDialog
