@@ -57,8 +57,5 @@ echo 📦  Installing frontend dependencies ...
 pushd "%ROOT%frontend" || exit /b 1
 npm install
 popd
-
-
-
 echo === ✅  Micromamba installation complete ===
 endlocal
