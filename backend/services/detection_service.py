@@ -14,8 +14,8 @@ def run_detection_logic(form):
     if not model:
         raise Exception("Model parameter is required")
 
-    img_size = form.get("img_size", "640")
-    conf = form.get("conf", "0.4")
+    img_size = form.get("imageSize", "640")
+    conf = form.get("confidence", "0.4")
     iou = form.get("iou", "0.45")
     weight_file = os.path.join("runs", "train", training_run, "weights", "best.pt")
     if not os.path.exists(os.path.join(FOLDER_MODELS, model, weight_file)):

@@ -65,8 +65,8 @@ def start_validation(data):
 
     source = data.get("source")
     train_run = data.get("trainingRun")
-    img_size = data.get("imgSize", "640")
-    conf = data.get("conf", "0.25")
+    img_size = data.get("imageSize", "640")
+    conf = data.get("confidence", "0.25")
     iou = data.get("iou", "0.5")
     model = data.get("model")
 

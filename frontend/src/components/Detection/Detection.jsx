@@ -80,24 +80,6 @@ const Detection = () => {
             (prevIndex - 1 + detectResultImages.length) % detectResultImages.length
         );
     };
-    //todo remove
-    const handleFolderSelection1 = (event) => {
-        const files = event.target.files;
-        if (files && files.length > 0) {
-            const imageFiles = Array.from(files).filter(file => {
-                const fileExtension = file.name.split('.').pop().toLowerCase();
-                return ['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileExtension);
-            });
-            if (imageFiles.length === 0) {
-                alert("No images were found in the selected folder.");
-                return;
-            }
-            // Use the first file to determine the folder name. (webkitRelativePath has format "FolderName/subfolder/.../file.jpg")
-            const relativePath = files[0].webkitRelativePath;
-            const folderName = relativePath.split('/')[0];
-            setSourceDirectory(folderName);
-        }
-    };
 
     const handleFolderSelection = () => {
         const folderPath = prompt("Enter path to data directory");
@@ -118,7 +100,7 @@ const Detection = () => {
         formData.append("trainingRun", selectedTrainingRun);
         formData.append("confidence", confidenceThreshold);
         formData.append("iou", iouThreshold);
-        formData.append("img_size", imageSize);
+        formData.append("imageSize", imageSize);
 
         setDetectionStatus("pending");
         setDetectResultImages([]);

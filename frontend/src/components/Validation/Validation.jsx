@@ -125,7 +125,7 @@ const Validation = () => {
             trainingRun: selectedTrainingRun,
             confidence: validationParams.confidenceThreshold,
             iou: validationParams.iouThreshold,
-            img_size: validationParams.imageSize,
+            imageSize: validationParams.imageSize,
             classList: validationParams.classes,
         };
 
